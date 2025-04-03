@@ -1,0 +1,133 @@
+.hero-section {
+  position: relative;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  border-radius: 12px;
+  margin-top: 2rem;
+  color: white;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+  transition: all 0.3s ease;
+}
+
+.hero-section:hover {
+  box-shadow: 0 20px 35px -10px rgba(59, 130, 246, 0.6);
+  transform: translateY(-2px);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
+}
+
+.hero-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  margin: 0 0 1rem;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(to right, #ffffff, #e2e8f0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.5;
+  opacity: 0.9;
+  max-width: 650px;
+}
+
+.hero-pattern {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
+  background-size: 20px 20px;
+  opacity: 0.4;
+  transform: skewX(-12deg) translateX(10%);
+  z-index: 1;
+}
+
+/* Alternate background option */
+.hero-section.alt-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+}
+
+/* Alternative background for Dashboard */
+.hero-section.dashboard-bg {
+  background: linear-gradient(135deg, #0f766e 0%, #10b981 100%);
+}
+
+/* Alternative background for Analytics page */
+.hero-section.analytics-bg {
+  background: linear-gradient(135deg, #7e22ce 0%, #a855f7 100%);
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 3rem 1.5rem;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .hero-pattern {
+    width: 40%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 2.5rem 1.25rem;
+    text-align: center;
+  }
+  
+  .hero-title {
+    font-size: 1.75rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  
+  .hero-pattern {
+    display: none;
+  }
+}
+
+/* Animation for hero content */
+@keyframes fadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-title, .hero-subtitle {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.hero-title {
+  animation-delay: 0.1s;
+}
+
+.hero-subtitle {
+  animation-delay: 0.2s;
+} 

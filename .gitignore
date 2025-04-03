@@ -1,0 +1,63 @@
+# Git line endings
+* text=auto
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+Lib/
+Scripts/
+pyvenv.cfg
+include/
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.env
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database
+*.db
+instance/
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Frontend
+node_modules/
+build/
+dist/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Model files
+*.h5
+*.keras
+*.pkl
+*.joblib
+*.onnx
+
+# Temporary files
+temp_uploads/
+*.tmp
+*.temp

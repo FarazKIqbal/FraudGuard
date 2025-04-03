@@ -1,0 +1,15 @@
+data_path: 'data/augmented_fraud_dataset.csv'
+preprocessed_data_path: 'data/preprocessed_clicks.csv'
+model_types: ['random_forest', 'xgboost', 'neural_network']
+neural_network:
+  epochs: 100
+  batch_size: 256
+  layers: [128, 64]
+  dropout: 0.3
+test_size: 0.2
+random_state: 42
+logging_level: 'DEBUG'
+feature_engineering:
+  temporal_features: true
+  behavioral_features: true
+  risk_scoring: true

@@ -1,0 +1,126 @@
+.ad-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.ad-container.horizontal {
+  flex-direction: column;
+}
+
+.ad-component {
+  cursor: pointer;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: white;
+  box-shadow: rgba(0, 0, 0, 0.04) 0px 3px 5px, rgba(0, 0, 0, 0.07) 0px 0px 0px 1px;
+}
+
+.ad-component:hover {
+  transform: translateY(-4px);
+  box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+}
+
+.ad-component.clicked {
+  transform: scale(0.98);
+  box-shadow: rgba(0, 0, 0, 0.06) 0px 2px 4px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.ad-component.flagged {
+  border: 2px solid #ef4444;
+  box-shadow: 0 0 0 1px #ef4444, 0 4px 6px rgba(239, 68, 68, 0.2);
+}
+
+.ad-content {
+  position: relative;
+}
+
+.ad-image-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.ad-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.ad-image-container:hover .ad-image {
+  transform: scale(1.05);
+}
+
+.ad-info {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ad-title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1e293b;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.ad-description-container {
+  padding: 0 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.ad-description {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.spam-warning {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  animation: slideDown 0.4s ease-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Add a pulse animation for flagged ads */
+.ad-component.flagged {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
