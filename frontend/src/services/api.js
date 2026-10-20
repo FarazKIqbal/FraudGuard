@@ -1,0 +1,57 @@
+const API_BASE = '/api';
+
+async function request(path, options = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  });
+  const data = await res.json();
+  if (!res.ok) throw { status: res.status, ...data };
+  return data;
+}
+
+// ---- Health ----
+export const getHealth = () => request('/health');
+export const getReadiness = () => request('/health/ready');
+
+// ---- Prediction ----
+export const predictSingle = (clickData, model = 'meta_learner', threshold = null) => {
+  const params = new URLSearchParams({ model });
+  if (threshold !== null) params.append('threshold', threshold);
+  return request(`/predict?${params.toString()}`, {
+    method: 'POST',
+    body: JSON.stringify(clickData),
+  });
+};
+
+export const predictAllModels = (clickData, threshold = null) => {
+  const params = new URLSearchParams({});
+  if (threshold !== null) params.append('threshold', threshold);
+  return request(`/predict/all-models?${params.toString()}`, {
+    method: 'POST',
+    body: JSON.stringify(clickData),
+  });
+};
+
+export const predictBatch = (clicks, model = 'meta_learner', threshold = null) => {
+  const params = new URLSearchParams({ model });
+  if (threshold !== null) params.append('threshold', threshold);
+  return request(`/predict/batch?${params.toString()}`, {
+    method: 'POST',
+    body: JSON.stringify({ clicks }),
+  });
+};
+
+// ---- Models ----
+export const getModels = () => request('/models');
+export const getMetrics = () => request('/models/metrics');
+export const getFeatures = () => request('/models/features');
+
+// ---- Analytics ----
+export const getRiskScore = (clickData, threshold = 50) =>
+  request(`/analytics/risk-score?threshold=${threshold}`, {
+    method: 'POST',
+    body: JSON.stringify(clickData),
+  });
+
+export const getDatasetStats = () => request('/analytics/dataset/stats');

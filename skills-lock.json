@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "106acf230014cbb43ca34e6410371321b56ca742f9ee0442e8ec05bf02eb0384"
+    },
+    "readme-generator": {
+      "source": "geekjourneyx/readme-generator",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "6bbe07f22b6bcd6e9e5ee999891b363fa7533eb7779a1cf10f521e5c94eaf125"
+    }
+  }
+}

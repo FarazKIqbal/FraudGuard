@@ -1,0 +1,9 @@
+# FraudGuard Dependencies
+flask>=3.0
+flask-cors>=4.0
+flask-limiter>=3.5
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+xgboost>=2.0
+joblib>=1.3

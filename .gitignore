@@ -1,0 +1,44 @@
+# Virtual environments
+.venv/
+.venv-1/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.pytest_cache/
+
+# Node / frontend
+node_modules/
+npm-debug.log*
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Model binaries (large, regenerate via scripts/train_models.py)
+models/*.joblib
+
+# Datasets (large raw/expanded CSVs; processed/ is tracked)
+dataset/*.csv
+dataset/raw/
+
+# Tooling output
+.ua/
+.claude/
+.claude-plugin/
+.agents/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local env
+.env
+*.local
