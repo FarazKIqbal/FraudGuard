@@ -12,6 +12,7 @@ import {
   Info,
   AlertTriangle,
 } from 'lucide-react'
+import { Helmet } from 'react-helmet-async'
 import ClickForm from '../components/ClickForm'
 import FeatureImportanceBar from '../components/FeatureImportanceBar'
 import { getModels, getFeatures, predictSingle } from '../services/api'
@@ -95,6 +96,14 @@ export default function HowItWorks() {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>How It Works | FraudGuard - Stacking Ensemble Explained</title>
+        <meta name="description" content="Learn how FraudGuard's stacking ensemble works: Random Forest, XGBoost, and Neural Network base models feed a logistic regression meta-learner." />
+        <link rel="canonical" href="https://fraudguard.farazkiqbal.com/how-it-works" />
+        <meta property="og:title" content="How It Works | FraudGuard" />
+        <meta property="og:description" content="Stacking ensemble architecture and feature importance explained." />
+        <meta property="og:url" content="https://fraudguard.farazkiqbal.com/how-it-works" />
+      </Helmet>
       <h1>How the Model Works</h1>
       <p className="subtitle">Understand the signals, the ensemble, and the decision logic behind FraudGuard</p>
 

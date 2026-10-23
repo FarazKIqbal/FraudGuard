@@ -63,6 +63,11 @@ export default function Sidebar() {
             <span className="model-dot"></span>
           </div>
         </div>
+        <div className="sidebar-footer-link">
+          <NavLink to="/privacy" className={({ isActive }) => isActive ? 'active' : ''}>
+            Privacy Policy
+          </NavLink>
+        </div>
       </div>
     </aside>
   )

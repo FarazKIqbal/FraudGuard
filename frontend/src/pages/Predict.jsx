@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { ShieldAlert, ShieldCheck, Radar, Zap } from 'lucide-react'
+import { Helmet } from 'react-helmet-async'
 import { predictSingle, predictAllModels } from '../services/api'
 
 /* ── Radar Sweep Meter ──────────────────────────────────────── */
@@ -250,6 +251,14 @@ export default function Predict() {
 
   return (
     <div className="page-predict">
+      <Helmet>
+        <title>Click Analysis | FraudGuard - Predict Fraud</title>
+        <meta name="description" content="Analyze individual ad clicks in real-time using FraudGuard's stacked ensemble ML model with radar-based risk visualization." />
+        <link rel="canonical" href="https://fraudguard.farazkiqbal.com/predict" />
+        <meta property="og:title" content="Click Analysis | FraudGuard" />
+        <meta property="og:description" content="Real-time click fraud prediction with visual risk assessment." />
+        <meta property="og:url" content="https://fraudguard.farazkiqbal.com/predict" />
+      </Helmet>
       {/* Header */}
       <header className="predict-header">
         <div className="predict-header-left">

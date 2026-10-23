@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   ShieldCheck, Activity, Database, AlertTriangle,
 } from 'lucide-react'
+import { Helmet } from 'react-helmet-async'
 import { getHealth, getReadiness, getDatasetStats, getMetrics } from '../services/api'
 
 function StatCard({ label, value, sub, variant }) {
@@ -52,6 +53,14 @@ export default function Dashboard() {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>Dashboard | FraudGuard - Click Fraud Detection</title>
+        <meta name="description" content="FraudGuard dashboard showing system status, model performance, and dataset statistics for real-time click fraud detection." />
+        <link rel="canonical" href="https://fraudguard.farazkiqbal.com/" />
+        <meta property="og:title" content="Dashboard | FraudGuard - Click Fraud Detection" />
+        <meta property="og:description" content="System status and ensemble model performance overview." />
+        <meta property="og:url" content="https://fraudguard.farazkiqbal.com/" />
+      </Helmet>
       <header className="page-header">
         <h1 className="page-title">FraudGuard Dashboard</h1>
         <p className="subtitle">System status and model performance overview</p>

@@ -243,6 +243,21 @@ a:hover {
   background: var(--safe);
 }
 
+.sidebar-footer-link a {
+  display: block;
+  padding: var(--space-3) 0;
+  color: var(--fg-dim);
+  font-size: var(--text-sm);
+  text-align: center;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.sidebar-footer-link a:hover,
+.sidebar-footer-link a.active {
+  color: var(--accent);
+}
+
 /* ── Main Content ── */
 .main {
   margin-left: 260px;

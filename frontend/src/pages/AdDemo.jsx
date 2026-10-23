@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ShieldAlert, ShieldCheck, Layers, Clock, Eye, AlertTriangle } from 'lucide-react'
+import { Helmet } from 'react-helmet-async'
 import { predictSingle } from '../services/api'
 import ClickForm from '../components/ClickForm'
 
@@ -129,6 +130,14 @@ export default function AdDemo() {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>Ad Click Demo | FraudGuard - Simulate Fraud Detection</title>
+        <meta name="description" content="Interactive demo simulating ad impressions, user clicks, and real-time fraud prediction across legitimate, suspicious, and bot scenarios." />
+        <link rel="canonical" href="https://fraudguard.farazkiqbal.com/ad-demo" />
+        <meta property="og:title" content="Ad Click Demo | FraudGuard" />
+        <meta property="og:description" content="Simulate the full ad click fraud detection pipeline." />
+        <meta property="og:url" content="https://fraudguard.farazkiqbal.com/ad-demo" />
+      </Helmet>
       <h1>Ad Click Demo</h1>
       <p className="subtitle">Simulate an ad impression → user click → fraud prediction</p>
 

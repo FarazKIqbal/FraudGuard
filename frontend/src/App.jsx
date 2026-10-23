@@ -7,6 +7,8 @@ import Models from './pages/Models'
 import Analytics from './pages/Analytics'
 import HowItWorks from './pages/HowItWorks'
 import AdDemo from './pages/AdDemo'
+import NotFound from './pages/NotFound'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/ad-demo" element={<AdDemo />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>

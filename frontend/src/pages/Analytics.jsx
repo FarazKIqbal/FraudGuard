@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ShieldAlert, ShieldCheck, Gauge, SlidersHorizontal } from 'lucide-react'
+import { Helmet } from 'react-helmet-async'
 import ClickForm from '../components/ClickForm'
 import { getRiskScore } from '../services/api'
 
@@ -45,6 +46,14 @@ export default function Analytics() {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>Analytics | FraudGuard - Risk Scoring</title>
+        <meta name="description" content="Deep click fraud analytics with composite risk scoring, per-model contributions, and actionable risk factors." />
+        <link rel="canonical" href="https://fraudguard.farazkiqbal.com/analytics" />
+        <meta property="og:title" content="Analytics | FraudGuard" />
+        <meta property="og:description" content="Composite risk scoring and detailed fraud analysis." />
+        <meta property="og:url" content="https://fraudguard.farazkiqbal.com/analytics" />
+      </Helmet>
       <h1>Analytics</h1>
       <p className="subtitle">Composite risk scoring &amp; deep analysis</p>
 

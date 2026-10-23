@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Upload, ShieldAlert, SlidersHorizontal } from 'lucide-react'
+import { Helmet } from 'react-helmet-async'
 import { predictBatch } from '../services/api'
 
 const SAMPLE = JSON.stringify([
@@ -54,6 +55,14 @@ export default function BatchPredict() {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>Batch Prediction | FraudGuard - Bulk Click Analysis</title>
+        <meta name="description" content="Analyze multiple ad clicks at once with FraudGuard's batch prediction API. Get fraud rates and individual predictions for entire click datasets." />
+        <link rel="canonical" href="https://fraudguard.farazkiqbal.com/batch" />
+        <meta property="og:title" content="Batch Prediction | FraudGuard" />
+        <meta property="og:description" content="Bulk click fraud analysis for ad networks." />
+        <meta property="og:url" content="https://fraudguard.farazkiqbal.com/batch" />
+      </Helmet>
       <h1>Batch Predict</h1>
       <p className="subtitle">Analyse multiple clicks at once</p>
 

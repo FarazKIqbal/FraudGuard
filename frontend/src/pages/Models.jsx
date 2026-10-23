@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Cpu, Layers, BarChart3, Table } from 'lucide-react'
+import { Helmet } from 'react-helmet-async'
 import { getModels, getMetrics, getFeatures } from '../services/api'
 
 function ConfusionMatrix({ tp, fp, fn, tn }) {
@@ -83,6 +84,14 @@ export default function Models() {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>Models & Performance | FraudGuard - ML Ensemble</title>
+        <meta name="description" content="Random Forest, XGBoost, Neural Network, and Meta-Learner ensemble models with accuracy, precision, recall, and ROC-AUC metrics." />
+        <link rel="canonical" href="https://fraudguard.farazkiqbal.com/models" />
+        <meta property="og:title" content="Models & Performance | FraudGuard" />
+        <meta property="og:description" content="Ensemble ML model performance and confusion matrices." />
+        <meta property="og:url" content="https://fraudguard.farazkiqbal.com/models" />
+      </Helmet>
       <h1>Models</h1>
       <p className="subtitle">Trained model details & performance</p>
 
