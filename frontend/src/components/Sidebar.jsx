@@ -16,11 +16,20 @@ const links = [
 export default function Sidebar() {
   return (
     <aside className="sidebar">
-      <div className="logo">
-        <Shield size={22} /> <span>FraudGuard</span>
+      <div className="sidebar-header">
+        <div className="logo">
+          <div className="logo-icon">
+            <Shield size={18} />
+          </div>
+          <span>FraudGuard</span>
+        </div>
+        <div className="live-badge">
+          <span className="live-dot"></span>
+          LIVE SCAN
+        </div>
       </div>
 
-      <nav>
+      <nav className="sidebar-nav">
         {links.map(l => (
           <NavLink
             key={l.to}
@@ -34,7 +43,27 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="status-badge">API Online</div>
+      <div className="sidebar-footer">
+        <div className="model-status">
+          <div className="model-status-title">Model Status</div>
+          <div className="model-status-item">
+            <span className="model-name">RF</span>
+            <span className="model-dot"></span>
+          </div>
+          <div className="model-status-item">
+            <span className="model-name">XGB</span>
+            <span className="model-dot"></span>
+          </div>
+          <div className="model-status-item">
+            <span className="model-name">NN</span>
+            <span className="model-dot"></span>
+          </div>
+          <div className="model-status-item">
+            <span className="model-name">META</span>
+            <span className="model-dot"></span>
+          </div>
+        </div>
+      </div>
     </aside>
   )
 }

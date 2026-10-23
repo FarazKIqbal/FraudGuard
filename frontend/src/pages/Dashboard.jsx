@@ -4,14 +4,13 @@ import {
 } from 'lucide-react'
 import { getHealth, getReadiness, getDatasetStats, getMetrics } from '../services/api'
 
-function StatCard({ icon: Icon, label, value, sub, variant }) {
+function StatCard({ label, value, sub, variant }) {
   return (
     <div className={`stat-card ${variant || ''}`}>
-      <div className="stat-icon"><Icon size={22} /></div>
+      <span className="stat-card-value mono">{value}</span>
       <div>
-        <span className="stat-value">{value}</span>
-        <span className="stat-label">{label}</span>
-        {sub && <span className="stat-sub">{sub}</span>}
+        <span className="stat-card-label">{label}</span>
+        {sub && <span className="stat-card-sub">{sub}</span>}
       </div>
     </div>
   )
@@ -53,29 +52,31 @@ export default function Dashboard() {
 
   return (
     <div className="page">
-      <h1>Dashboard</h1>
-      <p className="subtitle">FraudGuard system overview</p>
+      <header className="page-header">
+        <h1 className="page-title">FraudGuard Dashboard</h1>
+        <p className="subtitle">System status and model performance overview</p>
+      </header>
 
       {/* Status Cards */}
       <div className="stat-grid">
         <StatCard
-          icon={ShieldCheck} label="API Status"
+          label="API Status"
           value={health?.status === 'healthy' ? 'Online' : 'Offline'}
           variant={health?.status === 'healthy' ? 'success' : 'danger'}
         />
         <StatCard
-          icon={Activity} label="Models Loaded"
+          label="Models Loaded"
           value={ready?.models_loaded ? `${Object.keys(ready.models_loaded).length}` : '—'}
           sub={ready?.status === 'ready' ? 'All ready' : 'Degraded'}
           variant={ready?.status === 'ready' ? 'success' : 'warn'}
         />
         <StatCard
-          icon={Database} label="Training Samples"
+          label="Training Samples"
           value={ds.total_samples?.toLocaleString() || '—'}
           sub={ds.fraud_percentage ? `${ds.fraud_percentage}% fraud` : ''}
         />
         <StatCard
-          icon={AlertTriangle} label="Best Model (F1)"
+          label="Best Model (F1)"
           value={best ? parseFloat(best.f1_score).toFixed(4) : '—'}
           sub={best?.model || ''}
           variant="primary"
@@ -84,7 +85,7 @@ export default function Dashboard() {
 
       {/* Models metrics table */}
       {metrics?.data && (
-        <div className="card mt-2">
+        <div className="card">
           <h2>Model Performance</h2>
           <div className="table-wrap">
             <table>
@@ -112,7 +113,7 @@ export default function Dashboard() {
 
       {/* Dataset stats */}
       {stats?.data && (
-        <div className="card-row mt-2">
+        <div className="card-row mt-1">
           <div className="card flex-1">
             <h3>Training Set</h3>
             <ul className="kv-list">
