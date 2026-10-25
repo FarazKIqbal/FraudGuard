@@ -79,8 +79,10 @@ def model_metrics():
     df = pd.read_csv(metrics_path)
     # Normalize model names to match frontend expected keys
     df['model'] = df['model'].str.lower().str.replace(' ', '_', regex=False)
-    # Map "meta_learner_(logistic_regression)" -> "meta_learner"
-    df['model'] = df['model'].str.replace('_logistic_regression', '', regex=False)
+    # Remove parenthetical suffixes like "(logistic_regression)"
+    df['model'] = df['model'].str.replace(r'\(.*?\)', '', regex=True).str.strip('_')
+    # Clean up any double underscores
+    df['model'] = df['model'].str.replace('__', '_', regex=True)
     records = df.to_dict(orient='records')
 
     return jsonify({'status': 'success', 'data': records})
