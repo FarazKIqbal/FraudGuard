@@ -4,6 +4,7 @@ Model information routes – metadata, metrics, feature names, and importance.
 
 import os
 import joblib
+import pandas as pd
 from flask import Blueprint, jsonify, current_app, abort
 
 models_bp = Blueprint('models', __name__)
@@ -184,16 +185,10 @@ def model_importance(model_name):
             if detector.meta_learner_metadata
             else []
         )
-        features = meta_feature_names[: len(coefficients)] + [
-            None
-        ] * (len(meta_feature_names) - len(coefficients))
-        coefficients = coefficients[: len(meta_feature_names)] + [
-            0.0
-        ] * (len(meta_feature_names) - len(coefficients))
         return jsonify({
             'status': 'success',
             'data': {
-                'meta_features': features,
+                'meta_features': meta_feature_names,
                 'coefficients': coefficients,
             },
         })

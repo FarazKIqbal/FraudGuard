@@ -174,17 +174,54 @@ class FraudDetector:
 
         # Preprocess all data at once
         preprocessed = preprocess_new_data(df, self.models_dir)
+        X = preprocessed.values if hasattr(preprocessed, 'values') else preprocessed
 
-        # Get predictions
+        # Vectorised path: call each model once on the whole batch.
+        threshold = fraud_threshold if fraud_threshold is not None else self.fraud_threshold
+
+        if model_name == 'meta_learner' and self.meta_learner:
+            meta_features = self._generate_meta_features(preprocessed)
+            preds = self.meta_learner.predict(meta_features)
+            probas = self.meta_learner.predict_proba(meta_features)
+            fraud_probs = probas[:, 1]
+            legit_probs = probas[:, 0]
+            is_fraudulent = fraud_probs >= threshold
+            confidences = np.where(is_fraudulent, fraud_probs, legit_probs)
+            results = []
+            for i in range(len(preprocessed)):
+                results.append({
+                    'is_fraudulent': bool(is_fraudulent[i]),
+                    'classification': 'FRAUD' if is_fraudulent[i] else 'LEGITIMATE',
+                    'confidence_score': float(confidences[i]),
+                    'fraud_probability': float(fraud_probs[i]),
+                    'legitimate_probability': float(legit_probs[i]),
+                    'model_used': 'meta_learner',
+                    'fraud_threshold': threshold,
+                })
+            return results
+
+        if model_name not in self.models:
+            raise ValueError(f"Model '{model_name}' not available. Available: {list(self.models.keys())}")
+
+        model = self.models[model_name]
+        preds = model.predict(X)
+        probas = model.predict_proba(X)
+        fraud_probs = probas[:, 1]
+        legit_probs = probas[:, 0]
+        is_fraudulent = fraud_probs >= threshold
+        confidences = np.where(is_fraudulent, fraud_probs, legit_probs)
+
         results = []
         for i in range(len(preprocessed)):
-            row = preprocessed.iloc[i:i+1]
-            if model_name == 'meta_learner':
-                result = self._predict_with_meta_learner(row, fraud_threshold=fraud_threshold)
-            else:
-                result = self._predict_with_model(row, model_name, fraud_threshold=fraud_threshold)
-            results.append(result)
-
+            results.append({
+                'is_fraudulent': bool(is_fraudulent[i]),
+                'classification': 'FRAUD' if is_fraudulent[i] else 'LEGITIMATE',
+                'confidence_score': float(confidences[i]),
+                'fraud_probability': float(fraud_probs[i]),
+                'legitimate_probability': float(legit_probs[i]),
+                'model_used': model_name,
+                'fraud_threshold': threshold,
+            })
         return results
     
     def _predict_with_model(self, preprocessed_data, model_name, fraud_threshold=None):

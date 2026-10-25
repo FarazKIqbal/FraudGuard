@@ -10,7 +10,7 @@ export default function NotFound() {
         <meta name="description" content="The page you're looking for doesn't exist." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <AlertTriangle size={48} style={{ margin: '0 auto 1rem', color: 'var(--amber)' }} />
+      <AlertTriangle size={48} style={{ margin: '0 auto 1rem', color: 'var(--warn)' }} />
       <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>404</h1>
       <p className="subtitle" style={{ marginBottom: '2rem' }}>Page not found</p>
       <p style={{ marginBottom: '2rem', color: 'var(--text-dim)' }}>

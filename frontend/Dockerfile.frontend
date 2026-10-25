@@ -1,0 +1,16 @@
+# Static frontend build for Railway/Render.
+# Builds the React app and serves it alongside the API.
+FROM node:18-alpine AS build
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Serve with a tiny nginx image.
+FROM nginx:alpine
+COPY --from=app/dist /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

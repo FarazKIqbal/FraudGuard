@@ -1,13 +1,26 @@
 const API_BASE = '/api';
+const REQUEST_TIMEOUT_MS = 15000;
 
 async function request(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  });
-  const data = await res.json();
-  if (!res.ok) throw { status: res.status, ...data };
-  return data;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      signal: controller.signal,
+      ...options,
+    });
+    const data = await res.json();
+    if (!res.ok) throw { status: res.status, ...data };
+    return data;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw { status: 0, message: `Request timed out after ${REQUEST_TIMEOUT_MS / 1000}s` };
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ---- Health ----

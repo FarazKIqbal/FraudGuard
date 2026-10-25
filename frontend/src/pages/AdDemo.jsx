@@ -107,14 +107,14 @@ export default function AdDemo() {
   const scenarioData = SCENARIOS[scenario]
 
   // Simulate the "ad displaying" + "user clicking" journey
-  const simulateAdClick = () => {
+  const simulateAdClick = (selectedScenario = scenario) => {
     // Start with scenario data, then override with a slight modification
     // to show how the model reacts to subtle changes
-    const base = { ...scenarioData.data }
+    const base = { ...SCENARIOS[selectedScenario].data }
     // If bot scenario, nudge bot_likelihood higher; if legitimate, nudge down
-    if (scenario === 'bot') {
+    if (selectedScenario === 'bot') {
       base.bot_likelihood_score = 0.99
-    } else if (scenario === 'suspicious') {
+    } else if (selectedScenario === 'suspicious') {
       base.bot_likelihood_score = 0.95
     }
     setClickData(base)
@@ -157,7 +157,7 @@ export default function AdDemo() {
       {/* Click data form */}
       <div className="card mt-1">
         <h2><Eye size={20} /> Click Data</h2>
-        <ClickForm onSubmit={handleDemoSubmit} loading={loading} initialData={clickData} />
+        <ClickForm onSubmit={handleSubmit} loading={loading} initialData={clickData} />
       </div>
 
       {/* Prediction result */}
@@ -188,7 +188,10 @@ export default function AdDemo() {
           {Object.keys(SCENARIOS).map(key => {
             const s = SCENARIOS[key]
             return (
-              <div key={key} className="scenario-item" onClick={() => simulateAdClick()}>
+              <div key={key} className="scenario-item" onClick={() => {
+                setScenario(key)
+                simulateAdClick(key)
+              }}>
                 <span className="scenario-name">{s.name}</span>
                 <span className="scenario-desc">{s.description}</span>
               </div>

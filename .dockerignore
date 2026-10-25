@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Node / frontend build artifacts
+node_modules/
+dist/
+build/
+npm-debug.log*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local environment
+.env
+*.local
+
+# Tooling output
+.ua/
+.claude/
+
+# Large model binaries (regenerated or downloaded at deploy time)
+models/*.joblib
+
+# Large datasets (processed/ is tracked)
+dataset/*.csv
+dataset/raw/

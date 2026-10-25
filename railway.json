@@ -1,0 +1,13 @@
+# Railway deployment configuration.
+# Detected automatically by the Railway CLI. Override with `railway variables set`.
+
+[build]
+  builder = "dockerfile"
+  dockerfile = "Dockerfile"
+
+[deploy]
+  restartPolicy = "on-failure"
+  maxRetries = 3
+
+[environment]
+  production = "production"

@@ -34,10 +34,14 @@ const NUMERICAL = [
   { key: 'bot_likelihood_score', label: 'Bot Likelihood',     min: 0, max: 1,   step: 0.01 },
 ]
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-export default function ClickForm({ onSubmit, loading }) {
-  const [form, setForm] = useState(DEFAULTS)
+export default function ClickForm({ onSubmit, loading, initialData }) {
+  const [form, setForm] = useState(initialData || DEFAULTS)
+
+  useEffect(() => {
+    if (initialData) setForm(initialData)
+  }, [initialData])
 
   const set = (key, raw) => {
     let val = raw
