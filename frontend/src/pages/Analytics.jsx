@@ -5,7 +5,7 @@ import ClickForm from '../components/ClickForm'
 import { getRiskScore } from '../services/api'
 
 function RiskMeter({ score, level }) {
-  const color = score >= 75 ? 'var(--red)' : score >= 50 ? 'var(--amber)' : score >= 25 ? 'var(--blue)' : 'var(--green)'
+  const color = score >= 75 ? 'var(--danger)' : score >= 50 ? 'var(--warn)' : score >= 25 ? 'var(--cyan)' : 'var(--safe)'
   return (
     <div className="risk-meter">
       <div className="risk-track">

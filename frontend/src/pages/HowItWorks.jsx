@@ -147,7 +147,7 @@ export default function HowItWorks() {
             importances={xgbImportance.importances}
             title="XGBoost — Feature Importance (Gain)"
             subtitle="Higher = more contribution to loss reduction (fraud separation)"
-            color="var(--amber)"
+            color="var(--accent)"
           />
         </div>
       )}
