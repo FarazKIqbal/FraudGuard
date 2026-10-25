@@ -78,11 +78,16 @@ def model_metrics():
 
     df = pd.read_csv(metrics_path)
     # Normalize model names to match frontend expected keys
+    model_mapping = {
+        'random_forest': 'random_forest',
+        'xgboost': 'xgboost',
+        'neural_network': 'neural_network',
+        'meta-learner_logistic_regression': 'meta_learner',
+        'meta_learner_logistic_regression': 'meta_learner',
+    }
     df['model'] = df['model'].str.lower().str.replace(' ', '_', regex=False)
-    # Remove parenthetical suffixes like "(logistic_regression)"
-    df['model'] = df['model'].str.replace(r'\(.*?\)', '', regex=True).str.strip('_')
-    # Clean up any double underscores
-    df['model'] = df['model'].str.replace('__', '_', regex=True)
+    df['model'] = df['model'].str.replace('(', '', regex=False).str.replace(')', '', regex=False)
+    df['model'] = df['model'].map(model_mapping).fillna(df['model'])
     records = df.to_dict(orient='records')
 
     return jsonify({'status': 'success', 'data': records})
