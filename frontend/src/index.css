@@ -1,58 +1,62 @@
 /* ── FraudGuard — Shadow Intelligence Design System ── */
 
-/*  Palette: Deep void black with purple energy & electric cyan
-    Inspired by: Gunmetal gray surfaces, neon purple glow, Shadow's anti-hero aesthetic
-    Mood: Dark, angular, powerful, mysterious */
+/*  Palette: Deep void black with Shadow's iconic red & gold
+    Inspired by: Shadow the Hedgehog — crimson energy, golden accents, void black
+    Mood: Dark, authoritative, powerful, precise */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; overflow-wrap: break-word; word-break: break-word; }
 
 :root {
-  /* Surfaces — gunmetal dark, not pure black */
-  --bg-void:    #06060b;
-  --bg-deep:    #0a0a14;
-  --bg-surface: #10101c;
-  --bg-card:    #16162a;
-  --bg-elevated:#1c1c36;
-  --bg-input:   #0d0d1a;
+  /* Surfaces — true void black to gunmetal */
+  --bg-void:    #000000;
+  --bg-deep:    #08080c;
+  --bg-surface: #111118;
+  --bg-card:    #181822;
+  --bg-elevated:#1e1e2a;
+  --bg-input:   #0c0c12;
 
-  /* Borders — metallic edges with purple tint */
-  --border:     #222240;
-  --border-hi:  #32325a;
-  --border-glow:#4a3a6e;
+  /* Borders — sharp metallic edges */
+  --border:     #2a2a3a;
+  --border-hi:  #3a3a50;
+  --border-glow:#4a4a6a;
 
-  /* Text — cool white with purple undertone */
-  --fg:         #e8e8ff;
-  --fg-muted:   #8888aa;
-  --fg-dim:     #555570;
+  /* Text — clean white on black */
+  --fg:         #f0f0f5;
+  --fg-muted:   #8888a0;
+  --fg-dim:     #555568;
 
-  /* Primary — Shadow's signature purple energy */
-  --accent:       #c400ff;
-  --accent-dim:   #8b00cc;
-  --accent-light: #d966ff;
-  --accent-glow:  rgba(196, 0, 255, 0.12);
-  --accent-border:rgba(196, 0, 255, 0.25);
-  --accent-soft:  rgba(196, 0, 255, 0.06);
+  /* Primary — Shadow's crimson red energy */
+  --accent:       #dc0000;
+  --accent-dim:   #a30000;
+  --accent-light: #ff3333;
+  --accent-glow:  rgba(220, 0, 0, 0.15);
+  --accent-border:rgba(220, 0, 0, 0.3);
+  --accent-soft:  rgba(220, 0, 0, 0.08);
 
-  /* Secondary — electric cyan for data & tech */
-  --cyan:       #00e5ff;
-  --cyan-dim:   #00b0cc;
-  --cyan-glow:  rgba(0, 229, 255, 0.12);
-  --cyan-border:rgba(0, 229, 255, 0.25);
-  --cyan-soft:  rgba(0, 229, 255, 0.06);
+  /* Secondary — Shadow's golden yellow for data & highlights */
+  --gold:       #ffd200;
+  --gold-dim:   #c4a200;
+  --gold-glow:  rgba(255, 210, 0, 0.12);
+  --gold-border:rgba(255, 210, 0, 0.25);
+  --gold-soft:  rgba(255, 210, 0, 0.06);
+
+  --orange:     #f6c883;
+  --orange-dim: #c49a5a;
+  --orange-glow: rgba(246, 200, 131, 0.12);
 
   /* Semantic */
-  --danger:       #ff1744;
-  --danger-dim:   #cc0033;
-  --danger-glow:  rgba(255, 23, 68, 0.12);
-  --danger-border:rgba(255, 23, 68, 0.3);
+  --danger:       #dc0000;
+  --danger-dim:   #a30000;
+  --danger-glow:  rgba(220, 0, 0, 0.15);
+  --danger-border:rgba(220, 0, 0, 0.3);
 
-  --warn:       #ffab00;
-  --warn-glow:  rgba(255, 171, 0, 0.12);
-  --warn-border:rgba(255, 171, 0, 0.3);
+  --warn:       #ffb528;
+  --warn-glow:  rgba(255, 181, 40, 0.12);
+  --warn-border:rgba(255, 181, 40, 0.3);
 
-  --safe:       #00e5ff;
-  --safe-glow:  rgba(0, 229, 255, 0.12);
-  --safe-border:rgba(0, 229, 255, 0.3);
+  --safe:       #ffd200;
+  --safe-glow:  rgba(255, 210, 0, 0.12);
+  --safe-border:rgba(255, 210, 0, 0.3);
 
   /* Aliases for legacy references */
   --red:    var(--danger);
@@ -91,12 +95,12 @@
   --r-md: 6px;
   --r-lg: 8px;
 
-  /* Shadows — directional, gunmetal feel */
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md:  0 4px 12px rgba(0,0,0,0.5);
-  --shadow-lg:  0 8px 24px rgba(0,0,0,0.6);
-  --glow-accent: 0 0 20px rgba(196, 0, 255, 0.15);
-  --glow-cyan:   0 0 20px rgba(0, 229, 255, 0.15);
+  /* Shadows — sharp, directional, void depth */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.6);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.7);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.8);
+  --glow-accent: 0 0 20px rgba(220, 0, 0, 0.2);
+  --glow-gold:   0 0 20px rgba(255, 210, 0, 0.15);
 }
 
 html { font-size: 15px; scroll-behavior: smooth; }
@@ -147,14 +151,14 @@ a:hover { opacity: 0.8; text-decoration: none; }
 .live-badge {
   display: inline-flex; align-items: center; gap: var(--s-2);
   padding: var(--s-1) var(--s-3);
-  background: var(--cyan-soft);
-  border: 1px solid var(--cyan-border);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-border);
   border-radius: var(--r-full);
-  color: var(--cyan);
+  color: var(--gold);
   font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.08em;
 }
 
-.live-dot { width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+.live-dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; animation: pulse 2s ease-in-out infinite; box-shadow: 0 0 6px var(--gold); }
 
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
@@ -188,7 +192,7 @@ a:hover { opacity: 0.8; text-decoration: none; }
 
 .model-status-item { display: flex; align-items: center; justify-content: space-between; font-size: var(--fs-xs); color: var(--fg-muted); }
 .model-status-item .model-name { font-family: var(--mono); font-weight: 600; }
-.model-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.model-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 
 .sidebar-footer-link a {
   display: block; padding: var(--s-3) 0;

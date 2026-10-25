@@ -34,9 +34,9 @@ function RadarMeter({ probability, threshold, onThresholdChange }) {
       // Background circle
       ctx.beginPath()
       ctx.arc(CX, CX, R, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(0,212,170,0.03)'
+      ctx.fillStyle = 'rgba(255,210,0,0.03)'
       ctx.fill()
-      ctx.strokeStyle = 'rgba(0,212,170,0.15)'
+      ctx.strokeStyle = 'rgba(255,210,0,0.15)'
       ctx.lineWidth = 1
       ctx.stroke()
 
@@ -44,13 +44,13 @@ function RadarMeter({ probability, threshold, onThresholdChange }) {
       [0.25, 0.5, 0.75].forEach((ratio) => {
         ctx.beginPath()
         ctx.arc(CX, CX, R * ratio, 0, Math.PI * 2)
-        ctx.strokeStyle = `rgba(0,212,170,${0.06 + ratio * 0.04})`
+        ctx.strokeStyle = `rgba(255,210,0,${0.06 + ratio * 0.04})`
         ctx.lineWidth = 0.5
         ctx.stroke()
       })
 
       // Crosshairs
-      ctx.strokeStyle = 'rgba(0,212,170,0.08)'
+      ctx.strokeStyle = 'rgba(255,210,0,0.08)'
       ctx.lineWidth = 0.5
       ctx.beginPath()
       ctx.moveTo(CX, 10)
@@ -72,7 +72,7 @@ function RadarMeter({ probability, threshold, onThresholdChange }) {
       // Risk arc (cyan → amber → red)
       const riskAngle = prob * Math.PI * 2 - Math.PI / 2
       const grad = ctx.createConicGradient(riskAngle, CX, CX)
-      grad.addColorStop(0, 'rgba(0,212,170,0.6)')
+      grad.addColorStop(0, 'rgba(255,210,0,0.6)')
       grad.addColorStop(Math.min(prob * 0.7, 0.5), 'rgba(255,184,0,0.5)')
       grad.addColorStop(1, 'rgba(255,71,87,0.6)')
       ctx.beginPath()
@@ -90,8 +90,8 @@ function RadarMeter({ probability, threshold, onThresholdChange }) {
           CX + Math.cos(sweep) * R, CX + Math.sin(sweep) * R,
           CX + Math.cos(sweep - trailLen) * R, CX + Math.sin(sweep - trailLen) * R
         )
-        trailGrad.addColorStop(0, 'rgba(0,212,170,0.35)')
-        trailGrad.addColorStop(1, 'rgba(0,212,170,0)')
+        trailGrad.addColorStop(0, 'rgba(220,0,0,0.35)')
+        trailGrad.addColorStop(1, 'rgba(220,0,0,0)')
         ctx.beginPath()
         ctx.arc(CX, CX, R * 0.9, sweep - trailLen, sweep)
         ctx.strokeStyle = trailGrad
@@ -102,7 +102,7 @@ function RadarMeter({ probability, threshold, onThresholdChange }) {
         ctx.beginPath()
         ctx.moveTo(CX, CX)
         ctx.lineTo(CX + Math.cos(sweep) * R * 0.9, CX + Math.sin(sweep) * R * 0.9)
-        ctx.strokeStyle = 'rgba(0,212,170,0.5)'
+        ctx.strokeStyle = 'rgba(220,0,0,0.5)'
         ctx.lineWidth = 1.5
         ctx.stroke()
 
@@ -114,7 +114,7 @@ function RadarMeter({ probability, threshold, onThresholdChange }) {
         const dotY = CX + Math.sin(riskAngle) * R * 0.65
         ctx.beginPath()
         ctx.arc(dotX, dotY, 4, 0, Math.PI * 2)
-        ctx.fillStyle = prob > 0.5 ? '#ff4757' : '#00d4aa'
+        ctx.fillStyle = prob > 0.5 ? '#dc0000' : '#ffd200'
         ctx.fill()
       }
 
@@ -301,6 +301,14 @@ export default function Predict() {
               threshold={threshold}
               onThresholdChange={setThreshold}
             />
+
+            {!result && (
+              <div className="radar-verdict">
+                <div style={{ textAlign: 'center', color: 'var(--fg-dim)', fontSize: 'var(--fs-sm)', padding: 'var(--s-2) 0' }}>
+                  <p style={{ marginBottom: 'var(--s-1)' }}>Click "Run Scan" to assess risk</p>
+                </div>
+              </div>
+            )}
 
             {result && (
               <div className="radar-verdict">
