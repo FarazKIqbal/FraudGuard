@@ -11,6 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the RF retraining script into the image and run it so the committed
+# random_forest_model.joblib never exceeds GitHub's 100 MB limit.
+COPY scripts/train_rf.py /app/scripts/train_rf.py
+RUN python /app/scripts/train_rf.py
+
 # Build the React frontend for production.
 COPY frontend/ ./frontend/
 WORKDIR /app/frontend
@@ -19,28 +24,6 @@ WORKDIR /app
 
 # Copy application code.
 COPY . .
-
-# Create the models directory and retrain a lighter Random Forest
-# so the committed binary never exceeds GitHub's 100 MB limit.
-RUN mkdir -p models dataset/processed && \
-    cat > /tmp/train_rf.py << 'EOF'
-import pandas as pd
-import numpy as np
-import joblib
-import os
-from sklearn.ensemble import RandomForestClassifier
-
-meta = joblib.load('models/feature_metadata.joblib')
-train = pd.read_csv('dataset/processed/train_data.csv')
-test = pd.read_csv('dataset/processed/test_data.csv')
-X = train[meta['feature_order']]
-y = train[meta['target']]
-m = RandomForestClassifier(n_estimators=100, max_depth=12, min_samples_split=10, min_samples_leaf=4, random_state=42, n_jobs=-1, class_weight='balanced')
-m.fit(X, y)
-joblib.dump(m, 'models/random_forest_model.joblib')
-print('RF retrained, size:', round(os.path.getsize('models/random_forest_model.joblib')/1024/1024, 1), 'MB')
-EOF
-    python /tmp/train_rf.py
 
 # Serve the built frontend via Flask static files.
 ENV FLASK_ENV=production
