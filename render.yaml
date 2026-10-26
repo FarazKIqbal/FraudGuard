@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fraudguard
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
