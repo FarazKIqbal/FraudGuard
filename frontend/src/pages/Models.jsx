@@ -1,52 +1,27 @@
 import { useEffect, useState } from 'react'
-import { Cpu, Layers, BarChart3, Table } from 'lucide-react'
+import { Cpu, Layers, BarChart3, Eye } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import { getModels, getMetrics, getFeatures } from '../services/api'
+import Modal from '../components/Modal'
+import ModelDetail from '../components/ModelDetail'
 
-function ConfusionMatrix({ tp, fp, fn, tn }) {
-  const total = tp + fp + fn + tn
-  const precision = tp / (tp + fp) || 0
-  const recall = tp / (tp + fn) || 0
-  const specificity = tn / (tn + fp) || 0
-  const accuracy = (tp + tn) / total || 0
-
-  return (
-    <div className="confusion-matrix">
-      <div className="cm-header">
-        <div className="cm-cell empty" />
-        <div className="cm-cell pred-label">Predicted Legit</div>
-        <div className="cm-cell pred-label">Predicted Fraud</div>
-      </div>
-      <div className="cm-row">
-        <div className="cm-cell true-label">Actual Legit</div>
-        <div className="cm-cell cm-tn">
-          <strong>{tn}</strong>
-          <span>({(tn / (tn + fp) * 100).toFixed(1)}%)</span>
-        </div>
-        <div className="cm-cell cm-fp">
-          <strong>{fp}</strong>
-          <span>({(fp / (tn + fp) * 100).toFixed(1)}%)</span>
-        </div>
-      </div>
-      <div className="cm-row">
-        <div className="cm-cell true-label">Actual Fraud</div>
-        <div className="cm-cell cm-fn">
-          <strong>{fn}</strong>
-          <span>({(fn / (tp + fn) * 100).toFixed(1)}%)</span>
-        </div>
-        <div className="cm-cell cm-tp">
-          <strong>{tp}</strong>
-          <span>({(tp / (tp + fn) * 100).toFixed(1)}%)</span>
-        </div>
-      </div>
-      <div className="cm-summary">
-        <span>Precision: {(precision * 100).toFixed(1)}%</span>
-        <span>Recall: {(recall * 100).toFixed(1)}%</span>
-        <span>Specificity: {(specificity * 100).toFixed(1)}%</span>
-        <span>Accuracy: {(accuracy * 100).toFixed(1)}%</span>
-      </div>
-    </div>
-  )
+const MODEL_DESC = {
+  random_forest: {
+    summary: 'An ensemble of 200 decision trees that independently evaluate each click across all 17 features, then aggregate their votes via bagging.',
+    strengths: ['Robust to overfitting via bootstrap aggregation', 'Captures non-linear feature interactions naturally', 'Handles mixed categorical + numerical features natively'],
+  },
+  xgboost: {
+    summary: 'Gradient-boosted tree ensemble (200 estimators) that sequentially corrects errors from previous trees using second-order Taylor approximations.',
+    strengths: ['Optimised for both speed and prediction accuracy', 'Built-in L1/L2 regularisation prevents overfitting', 'Excels at ranking and sparse data patterns'],
+  },
+  neural_network: {
+    summary: 'A 3-layer Multi-Layer Perceptron (128→64→32 hidden units) with ReLU activations, trained via mini-batch gradient descent with backpropagation.',
+    strengths: ['Learns complex feature interactions automatically', 'Fast inference once trained (single forward pass)', 'Sensitive to feature scaling — requires normalised input'],
+  },
+  meta_learner: {
+    summary: 'Logistic regression trained on the binary predictions and fraud probabilities from all three base models — the final arbiter in the stacking ensemble.',
+    strengths: ['Combines diverse base-model opinions into one calibrated score', 'Produces well-calibrated probability output', 'Interpretable coefficients show which base model to trust when'],
+  },
 }
 
 export default function Models() {
@@ -54,6 +29,7 @@ export default function Models() {
   const [metrics, setMetrics]   = useState(null)
   const [features, setFeatures] = useState(null)
   const [loading, setLoading]   = useState(true)
+  const [selectedModel, setSelectedModel] = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -72,8 +48,8 @@ export default function Models() {
 
   const metricsMap = {}
   metrics?.data?.forEach(m => { metricsMap[m.model] = m })
-
   const modelList = models?.data?.available_models || []
+  const uniqueMetrics = Object.values(metricsMap)
 
   const ICONS = {
     random_forest:  <Layers size={28} />,
@@ -92,42 +68,51 @@ export default function Models() {
         <meta property="og:description" content="Ensemble ML model performance and confusion matrices." />
         <meta property="og:url" content="https://fraudguard.farazkiqbal.com/models" />
       </Helmet>
-      <h1>Models</h1>
-      <p className="subtitle">Trained model details & performance</p>
+
+      <header className="page-header">
+        <h1 className="page-title">Models</h1>
+        <p className="subtitle">Trained model details &amp; performance — click any card to explore</p>
+      </header>
 
       {/* Model cards */}
       <div className="model-grid">
         {modelList.map(name => {
           const m = metricsMap[name]
+          const desc = MODEL_DESC[name]
           return (
-            <div className="model-card" key={name}>
+            <div
+              key={name}
+              className="model-card clickable"
+              onClick={() => setSelectedModel(name)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => e.key === 'Enter' && setSelectedModel(name)}
+            >
               <div className="model-icon">{ICONS[name] || <Cpu size={28} />}</div>
               <h3>{name.replace(/_/g, ' ')}</h3>
+              {desc && <p className="model-card-desc">{desc.summary}</p>}
               {m ? (
                 <>
                   <ul className="kv-list compact">
                     <li><span>Accuracy</span><strong>{parseFloat(m.accuracy).toFixed(4)}</strong></li>
-                    <li><span>Precision</span><strong>{parseFloat(m.precision).toFixed(4)}</strong></li>
                     <li><span>Recall</span><strong>{parseFloat(m.recall).toFixed(4)}</strong></li>
                     <li><span>F1 Score</span><strong>{parseFloat(m.f1_score).toFixed(4)}</strong></li>
                     <li><span>ROC AUC</span><strong>{parseFloat(m.roc_auc).toFixed(4)}</strong></li>
                   </ul>
-                  {/* Confusion matrix */}
-                  {m.true_positives !== undefined && (
-                    <div className="mt-1">
-                      <h4><Table size={16} /> Confusion Matrix</h4>
-                      <ConfusionMatrix
-                        tp={m.true_positives}
-                        fp={m.false_positives}
-                        fn={m.false_negatives}
-                        tn={m.true_negatives}
-                      />
-                    </div>
-                  )}
                 </>
               ) : (
                 <p className="muted">No metrics available</p>
               )}
+              <button
+                type="button"
+                className="model-card-cta"
+                onClick={e => {
+                  e.stopPropagation()
+                  setSelectedModel(name)
+                }}
+              >
+                <Eye size={14} /> View Full Details
+              </button>
             </div>
           )
         })}
@@ -145,8 +130,8 @@ export default function Models() {
                 </tr>
               </thead>
               <tbody>
-                {metrics.data.map(m => (
-                  <tr key={m.model}>
+                {uniqueMetrics.map(m => (
+                  <tr key={m.model} className="clickable" onClick={() => setSelectedModel(m.model)}>
                     <td>{m.model}</td>
                     <td>{parseFloat(m.accuracy).toFixed(4)}</td>
                     <td>{parseFloat(m.precision).toFixed(4)}</td>
@@ -165,6 +150,7 @@ export default function Models() {
       {features?.data && (
         <div className="card mt-2">
           <h2>Feature Overview</h2>
+          <p className="text-dim text-sm mb-1">17 features fed into every model, grouped by signal type.</p>
           <div className="feature-cols">
             {Object.entries(features.data).map(([group, list]) => (
               <div key={group}>
@@ -176,6 +162,20 @@ export default function Models() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Model detail modal */}
+      {selectedModel && (
+        <Modal
+          onClose={() => setSelectedModel(null)}
+          title={`${selectedModel.replace(/_/g, ' ')} Details`}
+        >
+          <ModelDetail
+            modelKey={selectedModel}
+            modelInfo={MODEL_DESC[selectedModel]}
+            metrics={metrics?.data?.find(m => m.model === selectedModel)}
+          />
+        </Modal>
       )}
     </div>
   )

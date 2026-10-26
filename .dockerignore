@@ -27,9 +27,6 @@ Thumbs.db
 .ua/
 .claude/
 
-# Large model binaries (regenerated or downloaded at deploy time)
-models/*.joblib
-
 # Large datasets (processed/ is tracked)
 dataset/*.csv
 dataset/raw/

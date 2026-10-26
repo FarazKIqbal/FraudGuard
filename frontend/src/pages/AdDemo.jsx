@@ -22,6 +22,21 @@ export default function AdDemo() {
   const lastClickTime = useRef(0)
   const hoverTimerRef = useRef(null)
 
+  const handleSubmit = async (payload) => {
+    if (!payload) return
+    setLoading(true)
+    setError(null)
+    setPrediction(null)
+    try {
+      const res = await predictSingle(payload, 'meta_learner')
+      setPrediction(res)
+    } catch (e) {
+      setError(e.message || 'Prediction failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Generate realistic click data based on click behavior
   const analyzeClickBehavior = useCallback(() => {
     const now = Date.now()
@@ -134,21 +149,6 @@ export default function AdDemo() {
       delay += timing
     })
   }, [analyzeClickBehavior, handleSubmit])
-
-  const handleSubmit = async (payload) => {
-    if (!payload) return
-    setLoading(true)
-    setError(null)
-    setPrediction(null)
-    try {
-      const res = await predictSingle(payload, 'meta_learner')
-      setPrediction(res)
-    } catch (e) {
-      setError(e.message || 'Prediction failed')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // Initialize with default scenario
   useEffect(() => {

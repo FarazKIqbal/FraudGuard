@@ -1,21 +1,65 @@
 import { useEffect, useState } from 'react'
-import {
-  Brain,
-  ArrowRight,
-  Layers,
-  BarChart3,
-  Cpu,
-  Shield,
-  Zap,
-  ChevronDown,
-  ChevronUp,
-  Info,
-  AlertTriangle,
-} from 'lucide-react'
+import { Shield, ArrowRight, Layers, BarChart3, Cpu, Zap, Brain, Info, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
-import ClickForm from '../components/ClickForm'
+import Modal from '../components/Modal'
 import FeatureImportanceBar from '../components/FeatureImportanceBar'
-import { getModels, getFeatures, predictSingle } from '../services/api'
+import { getModels, getFeatures } from '../services/api'
+
+const ARCH_STEPS = [
+  {
+    id: 'features',
+    icon: Layers,
+    title: 'Feature Engineering',
+    short: '17 features extracted: 5 categorical, 7 behavioural numerics, 3 time-based, 2 binary flags.',
+    detail: 'Each click is transformed into 17 numeric features the models can score: device type, browser, OS, ad position, IP reputation, click duration, scroll depth, mouse movement, keystrokes, click frequency, time since last click, bot likelihood score, hour of day, day of week, weekend flag, VPN usage, and proxy usage.',
+  },
+  {
+    id: 'base-models',
+    icon: BarChart3,
+    title: 'Base Models (Parallel)',
+    short: 'Three models score each click independently — Random Forest, XGBoost, and Neural Network.',
+    detail: 'Random Forest (200 trees) uses bagging to average many decision trees. XGBoost (200 estimators) uses gradient boosting to sequentially correct errors. Neural Network (128→64→32 hidden units) learns complex non-linear patterns via backpropagation. Each outputs both a binary prediction (fraud/legit) and a fraud probability (0–1).',
+  },
+  {
+    id: 'meta-features',
+    icon: Cpu,
+    title: 'Meta-Features (Stacking)',
+    short: 'Each base model contributes 2 features: its binary prediction + its fraud probability.',
+    detail: 'The meta-learner receives 6 meta-features total (2 per base model). This captures both the decision and the confidence of each base model, giving the meta-learner richer signal than probabilities alone. For example, a high fraud probability from Random Forest plus a low one from XGBoost sends a very different signal than both agreeing.',
+  },
+  {
+    id: 'meta-learner',
+    icon: Brain,
+    title: 'Meta-Learner (Logistic Regression)',
+    short: 'A logistic regression trained via 5-fold CV on the meta-features.',
+    detail: 'The meta-learner learns which base model to trust in which situations by assigning weighted coefficients to each meta-feature. Positive coefficients increase fraud probability; negative coefficients decrease it. The output is a final fraud probability between 0 and 1.',
+  },
+  {
+    id: 'threshold',
+    icon: Shield,
+    title: 'Threshold Decision',
+    short: 'If probability ≥ threshold (~0.35), flag as FRAUD. Lower = more sensitive.',
+    detail: 'The optimal threshold was determined during training by sweeping candidate values and selecting the one that maximised F1 score on the held-out test set. Currently set to ~0.35, meaning any click with a 35%+ fraud probability is flagged. Adjusting this threshold trades false positives against false negatives.',
+  },
+]
+
+const FEATURE_COLS = [
+  {
+    title: 'Context Signals',
+    icon: Shield,
+    items: ['device_type', 'browser', 'operating_system', 'ad_position', 'device_ip_reputation', 'VPN_usage', 'proxy_usage'],
+  },
+  {
+    title: 'Behavioral Metrics',
+    icon: Zap,
+    items: ['click_duration', 'scroll_depth', 'mouse_movement', 'keystrokes_detected', 'click_frequency', 'time_since_last_click', 'bot_likelihood_score'],
+  },
+  {
+    title: 'Time-Based Signals',
+    icon: ArrowRight,
+    items: ['hour', 'day_of_week', 'is_weekend'],
+  },
+]
 
 export default function HowItWorks() {
   const [modelsInfo, setModelsInfo] = useState(null)
@@ -23,11 +67,10 @@ export default function HowItWorks() {
   const [rfImportance, setRfImportance] = useState(null)
   const [xgbImportance, setXgbImportance] = useState(null)
   const [metaImportance, setMetaImportance] = useState(null)
-  const [demoResult, setDemoResult] = useState(null)
-  const [demoLoading, setDemoLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [activeStep, setActiveStep] = useState(null)
+  const [expandedFaq, setExpandedFaq] = useState(null)
 
-  // --- Load data on mount ---
   useEffect(() => {
     Promise.all([
       getModels().catch(() => null),
@@ -44,55 +87,17 @@ export default function HowItWorks() {
     }).catch(() => setError('Failed to load model explanation data'))
   }, [])
 
-  // --- Handle live demo submission ---
-  const handleDemoSubmit = async (payload) => {
-    setDemoLoading(true)
-    setDemoResult(null)
-    setError(null)
-    try {
-      const res = await predictSingle(payload, 'meta_learner')
-      setDemoResult(res)
-    } catch (e) {
-      setError(e.message || 'Demo prediction failed')
-    } finally {
-      setDemoLoading(false)
-    }
-  }
+  const faqs = [
+    { q: 'Why use stacking instead of a single model?', a: 'No single model captures all the patterns in click fraud data. Stacking lets each model play to its strengths — RF handles non-linear interactions, XGBoost catches sequential patterns, and the NN learns complex feature combinations. The meta-learner then decides which opinion to trust in each situation.' },
+    { q: 'How does the meta-learner avoid overfitting?', a: 'The meta-features are generated via 5-fold cross-validation on the training set, meaning each base model\'s prediction for a sample comes from a model that never saw that sample during training. This prevents the meta-learner from learning trivial shortcuts.' },
+    { q: 'What makes a click "suspicious"?', a: 'The strongest predictors are bot_likelihood_score (near 1.0), very short click_duration (< 0.5s), low mouse_movement (< 50), high click_frequency (> 10/min), poor IP reputation, and VPN/proxy usage. Late-night clicks (2–5 AM) also carry higher risk.' },
+    { q: 'Can I adjust the fraud threshold?', a: 'Yes — the default threshold is ~0.35, optimised for F1 score. Lowering it catches more fraud but increases false positives. Raising it reduces false alarms but may miss sophisticated fraud. The Predict page lets you experiment with different thresholds in real time.' },
+  ]
 
-  if (error) return <div className="error-text">{error}</div>
+  if (error) return <p className="error-text">{error}</p>
   if (!modelsInfo) return <div className="loading-center"><span className="spinner" /> Loading model data...</div>
 
-  const availableModels = modelsInfo.available_models || []
-  const hasMetaLearner = availableModels.includes('meta_learner')
-
-  // --- Architecture steps ---
-  const architectureSteps = [
-    {
-      icon: <Layers size={24} />,
-      title: 'Feature Engineering',
-      description: '17 raw features extracted: 5 categorical (device, browser, OS, ad position, IP reputation), 7 behavioral numerics (duration, scroll, mouse, keystrokes, frequency, time since last click, bot score), 3 time-based (hour, day of week, weekend flag), 2 binary (VPN, proxy).',
-    },
-    {
-      icon: <BarChart3 size={24} />,
-      title: 'Base Models (Parallel)',
-      description: 'Three models independently score the click:\n• Random Forest (200 trees) — ensemble of decision trees\n• XGBoost (200 estimators) — gradient boosting\n• Neural Network (128→64→32) — multi-layer perceptron\nEach outputs a fraud probability (0–1).',
-    },
-    {
-      icon: <Cpu size={24} />,
-      title: 'Meta-Features (Stacking)',
-      description: 'The meta-learner receives 6 features: each base model\'s binary prediction (0/1) + fraud probability. These capture both the decision and the confidence of each base model.',
-    },
-    {
-      icon: <Zap size={24} />,
-      title: 'Meta-Learner (Logistic Regression)',
-      description: 'A logistic regression trained on the meta-features via 5-fold CV. It learns which base model to trust in which situations. Output: final fraud probability (0–1).',
-    },
-    {
-      icon: <Shield size={24} />,
-      title: 'Threshold Decision',
-      description: 'If probability ≥ threshold (default ~0.35 from training), flag as FRAUD. Lower threshold = more sensitive (catch more fraud, more false positives).',
-    },
-  ]
+  const toggleFaq = (i) => setExpandedFaq(expandedFaq === i ? null : i)
 
   return (
     <div className="page">
@@ -104,206 +109,234 @@ export default function HowItWorks() {
         <meta property="og:description" content="Stacking ensemble architecture and feature importance explained." />
         <meta property="og:url" content="https://fraudguard.farazkiqbal.com/how-it-works" />
       </Helmet>
-      <h1>How the Model Works</h1>
-      <p className="subtitle">Understand the signals, the ensemble, and the decision logic behind FraudGuard</p>
 
-      {/* 1. Model Architecture */}
-      <div className="card">
-        <h2><Brain size={22} /> Stacking Ensemble Architecture</h2>
+      <header className="page-header">
+        <h1 className="page-title">How the Model Works</h1>
+        <p className="subtitle">Understand the signals, the ensemble, and the decision logic behind FraudGuard</p>
+      </header>
+
+      {/* ── Architecture Steps (clickable) ── */}
+      <section className="card mt-1">
+        <h2><Brain size={20} /> Stacking Ensemble Architecture</h2>
+        <p className="text-dim text-sm mb-1">Click any step below to learn more about how it works.</p>
         <div className="architecture-flow">
-          {architectureSteps.map((step, i) => (
-            <div key={i} className="arch-step">
-              <div className="arch-icon">{step.icon}</div>
-              <div className="arch-content">
-                <h3>{step.title}</h3>
-                <pre className="arch-desc">{step.description}</pre>
+          {ARCH_STEPS.map((step, i) => {
+            const Icon = step.icon
+            const isActive = activeStep === step.id
+            return (
+              <div
+                key={step.id}
+                className={`arch-step ${isActive ? 'active' : ''}`}
+                onClick={() => setActiveStep(isActive ? null : step.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => e.key === 'Enter' && setActiveStep(isActive ? null : step.id)}
+              >
+                <div className="arch-icon"><Icon size={22} /></div>
+                <div className="arch-content">
+                  <h3>{step.title}</h3>
+                  <p className="arch-desc">{step.short}</p>
+                  <span className="arch-toggle">{isActive ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</span>
+                </div>
+                {i < ARCH_STEPS.length - 1 && <ArrowRight className="arch-arrow" size={20} />}
               </div>
-              {i < architectureSteps.length - 1 && (
-                <ArrowRight className="arch-arrow" size={24} />
-              )}
+            )
+          })}
+        </div>
+      </section>
+
+      {/* ── Detail Modal ── */}
+      {activeStep && (
+        <Modal
+          onClose={() => setActiveStep(null)}
+          title={ARCH_STEPS.find(s => s.id === activeStep)?.title}
+        >
+          {(() => {
+            const step = ARCH_STEPS.find(s => s.id === activeStep)
+            if (!step) return null
+            return (
+              <div className="step-detail">
+                <p>{step.detail}</p>
+                {step.id === 'features' && featuresInfo && (
+                  <div className="mt-2">
+                    <h4>Input Features ({Object.values(featuresInfo).flat().length} total)</h4>
+                    <div className="feature-cols mt-1">
+                      {Object.entries(featuresInfo).map(([group, list]) => (
+                        <div key={group}>
+                          <h5>{group.replace(/_/g, ' ')}</h5>
+                          <ul className="feature-list">
+                            {(Array.isArray(list) ? list : [list]).map(f => <li key={f}>{f}</li>)}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {step.id === 'base-models' && (
+                  <div className="mt-2">
+                    <h4>Available Base Models</h4>
+                    <ul className="kv-list mt-1">
+                      <li><span>Random Forest</span><strong>200 trees, bagging ensemble</strong></li>
+                      <li><span>XGBoost</span><strong>200 estimators, gradient boosting</strong></li>
+                      <li><span>Neural Network</span><strong>128 → 64 → 32 hidden units</strong></li>
+                    </ul>
+                  </div>
+                )}
+                {step.id === 'meta-features' && (
+                  <div className="mt-2">
+                    <h4>Meta-Feature Structure</h4>
+                    <p className="text-dim text-sm mb-1">Each base model contributes 2 features to the meta-learner:</p>
+                    <div className="table-wrap">
+                      <table>
+                        <thead><tr><th>Base Model</th><th>Meta Feature 1</th><th>Meta Feature 2</th></tr></thead>
+                        <tbody>
+                          <tr><td>Random Forest</td><td className="mono">rf_prediction (0/1)</td><td className="mono">rf_fraud_probability (0–1)</td></tr>
+                          <tr><td>XGBoost</td><td className="mono">xgb_prediction (0/1)</td><td className="mono">xgb_fraud_probability (0–1)</td></tr>
+                          <tr><td>Neural Network</td><td className="mono">nn_prediction (0/1)</td><td className="mono">nn_fraud_probability (0–1)</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {step.id === 'meta-learner' && metaImportance && (
+                  <div className="mt-2">
+                    <h4>Meta-Learner Coefficients</h4>
+                    <p className="text-dim text-sm mb-1">Positive = increases fraud probability. Negative = decreases it.</p>
+                    <div className="table-wrap">
+                      <table>
+                        <thead><tr><th>Meta-Feature</th><th>Coefficient</th><th>Effect</th></tr></thead>
+                        <tbody>
+                          {metaImportance.meta_features?.map((name, i) => (
+                            <tr key={name}>
+                              <td>{name}</td>
+                              <td className={metaImportance.coefficients[i] > 0 ? 'text-danger' : 'text-success'}>
+                                {metaImportance.coefficients[i].toFixed(4)}
+                              </td>
+                              <td>
+                                <span className={`badge ${metaImportance.coefficients[i] > 0 ? 'badge-danger' : 'badge-success'}`}>
+                                  {metaImportance.coefficients[i] > 0 ? 'Fraud signal' : 'Legit signal'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {step.id === 'threshold' && (
+                  <div className="mt-2">
+                    <h4>Threshold Tuning</h4>
+                    <p className="text-dim text-sm mb-1">
+                      The default threshold of <strong>0.35</strong> was selected to maximise F1 score on the test set. Lower thresholds catch more fraud but produce more false positives; higher thresholds reduce false alarms but may miss subtle fraud patterns.
+                    </p>
+                    <a href="/predict" className="btn btn-outline btn-sm mt-1">
+                      Adjust Threshold →
+                    </a>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+        </Modal>
+      )}
+
+      {/* ── Feature Importance ── */}
+      {(rfImportance || xgbImportance) && (
+        <div className="card-row mt-2">
+          {rfImportance && (
+            <div className="card flex-1">
+              <FeatureImportanceBar
+                features={rfImportance.features}
+                importances={rfImportance.importances}
+                title="Random Forest — Feature Importance (Gini)"
+                subtitle="Higher = more often used to split fraudulent vs legitimate clicks"
+                color="var(--gold)"
+              />
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 2. Feature Importance — Random Forest */}
-      {rfImportance && (
-        <div className="card mt-1">
-          <FeatureImportanceBar
-            features={rfImportance.features}
-            importances={rfImportance.importances}
-            title="Random Forest — Feature Importance (Gini)"
-            subtitle="Higher = more often used to split fraudulent vs legitimate clicks"
-            color="var(--blue)"
-          />
+          )}
+          {xgbImportance && (
+            <div className="card flex-1">
+              <FeatureImportanceBar
+                features={xgbImportance.features}
+                importances={xgbImportance.importances}
+                title="XGBoost — Feature Importance (Gain)"
+                subtitle="Higher = more contribution to loss reduction (fraud separation)"
+                color="var(--accent)"
+              />
+            </div>
+          )}
         </div>
       )}
 
-      {/* 3. Feature Importance — XGBoost */}
-      {xgbImportance && (
-        <div className="card mt-1">
-          <FeatureImportanceBar
-            features={xgbImportance.features}
-            importances={xgbImportance.importances}
-            title="XGBoost — Feature Importance (Gain)"
-            subtitle="Higher = more contribution to loss reduction (fraud separation)"
-            color="var(--accent)"
-          />
+      {/* ── Feature Categories ── */}
+      <section className="card mt-2">
+        <h2><Zap size={20} /> Input Features</h2>
+        <p className="text-dim text-sm mb-1">17 features fed into every model, grouped by signal type.</p>
+        <div className="feature-cols">
+          {FEATURE_COLS.map(col => {
+            const Icon = col.icon
+            return (
+              <div key={col.title} className="feature-col-card">
+                <div className="feature-col-icon"><Icon size={20} /></div>
+                <h4>{col.title}</h4>
+                <ul className="feature-list">
+                  {col.items.map(f => <li key={f}>{f}</li>)}
+                </ul>
+              </div>
+            )
+          })}
         </div>
-      )}
+      </section>
 
-      {/* 4. Meta-Learner Coefficients */}
-      {metaImportance && (
-        <div className="card mt-1">
-          <h2><Layers size={20} /> Meta-Learner Coefficients</h2>
-          <p className="text-dim text-sm mb-1">
-            Logistic regression weights on the 6 meta-features. Positive = increases fraud probability; negative = decreases it.
-          </p>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Meta-Feature</th>
-                  <th>Coefficient</th>
-                  <th>Effect</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metaImportance.meta_features?.map((name, i) => (
-                  <tr key={name}>
-                    <td>{name}</td>
-                    <td className={metaImportance.coefficients[i] > 0 ? 'text-danger' : 'text-success'}>
-                      {metaImportance.coefficients[i].toFixed(4)}
-                    </td>
-                    <td>
-                      <span className={`badge ${metaImportance.coefficients[i] > 0 ? 'badge-danger' : 'badge-success'}`}>
-                        {metaImportance.coefficients[i] > 0 ? 'Fraud signal' : 'Legitimate signal'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-sm text-dim mt-1">
-            Note: The meta-learner learns that <strong>base model fraud probabilities</strong> (positive coeffs) matter more than their binary predictions (smaller coeffs).
-          </p>
-        </div>
-      )}
-
-      {/* 5. What Makes a Click Suspicious */}
-      <div className="card mt-1">
-        <h2><AlertTriangle size={22} /> Top Fraud Indicators</h2>
+      {/* ── Top Fraud Indicators ── */}
+      <section className="card mt-2">
+        <h2><AlertTriangle size={20} /> Top Fraud Indicators</h2>
         <div className="feature-cols">
           <div>
             <h4><Zap size={16} /> Behavioral Anomalies</h4>
             <ul className="feature-list">
-              <li><strong>bot_likelihood_score</strong> — Highest single predictor. Bot-like patterns (fast clicks, no mouse movement) strongly indicate fraud.</li>
-              <li><strong>click_duration</strong> — Suspiciously short (under 0.5 seconds) suggests automated clicking.</li>
-              <li><strong>click_frequency</strong> — Bursts of rapid clicks are non-human.</li>
-              <li><strong>mouse_movement / scroll_depth / keystrokes</strong> — Near-zero values = no human interaction.</li>
+              <li><strong>bot_likelihood_score</strong> — Highest single predictor. Values near 1.0 strongly indicate automation.</li>
+              <li><strong>click_duration</strong> — Suspiciously short (&lt;0.5s) suggests scripted clicking.</li>
+              <li><strong>click_frequency</strong> — Bursts &gt;10 clicks/min are non-human.</li>
+              <li><strong>mouse_movement</strong> — Near-zero values = no human interaction.</li>
             </ul>
           </div>
           <div>
             <h4><Shield size={16} /> Context Signals</h4>
             <ul className="feature-list">
               <li><strong>device_ip_reputation</strong> — "Poor" or "Suspicious" IPs are high-risk.</li>
-              <li><strong>VPN_usage / proxy_usage</strong> — Anonymizing traffic = elevated risk.</li>
-              <li><strong>ad_position</strong> — "Bottom" or "Side" positions attract more accidental/bot clicks.</li>
-              <li><strong>time_since_last_click</strong> — Very short intervals suggest scripted behavior.</li>
+              <li><strong>VPN_usage / proxy_usage</strong> — Anonymising traffic elevates risk.</li>
+              <li><strong>ad_position</strong> — "Bottom" and "Side" positions attract more bot clicks.</li>
+              <li><strong>time_since_last_click</strong> — Very short intervals suggest scripting.</li>
             </ul>
           </div>
           <div>
-            <h4><Info size={16} /> Time-Based</h4>
+            <h4><ArrowRight size={16} /> Time-Based</h4>
             <ul className="feature-list">
               <li><strong>hour</strong> — Late night / early morning (2–5 AM) has higher fraud rates.</li>
-              <li><strong>is_weekend</strong> — Weekend traffic patterns differ; bots often run 24/7.</li>
+              <li><strong>is_weekend</strong> — Bots often run 24/7, unlike human traffic.</li>
               <li><strong>day_of_week</strong> — Certain weekdays see more botnet activity.</li>
             </ul>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 6. Live Demo */}
-      <div className="card mt-1">
-        <h2><Zap size={22} /> Live Demo — Test a Click</h2>
-        <p className="subtitle">Modify the features below and see how the meta-learner responds</p>
-
-        <div className="card-row mt-1" style={{ gap: '2rem', flexWrap: 'wrap' }}>
-          <div className="flex-1" style={{ minWidth: '380px' }}>
-            <ClickForm onSubmit={handleDemoSubmit} loading={demoLoading} />
-          </div>
-
-          <div className="flex-1" style={{ minWidth: '380px' }}>
-            {demoResult && (
-              <div className={`result-banner ${demoResult.prediction === 'fraudulent' ? 'fraud' : 'legit'}`}>
-                {demoResult.prediction === 'fraudulent' ? <Shield size={32} /> : <Shield size={32} />}
-                <div>
-                  <h3>{demoResult.prediction === 'fraudulent' ? 'FRAUD DETECTED' : 'LEGITIMATE CLICK'}</h3>
-                  <p>
-                    Fraud Probability: <strong>{(demoResult.fraud_probability * 100).toFixed(1)}%</strong>
-                    {' | '}
-                    Confidence: <strong>{(demoResult.confidence * 100).toFixed(1)}%</strong>
-                    {' | '}
-                    Model: <strong>{demoResult.model_used}</strong>
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {demoResult && (
-              <div className="card mt-1">
-                <h3>Why this decision?</h3>
-                <ul className="kv-list">
-                  {demoResult.fraud_probability > 0.5 && <li><span>High fraud probability</span><strong>{(demoResult.fraud_probability * 100).toFixed(1)}%</strong></li>}
-                  {demoResult.fraud_probability < 0.2 && <li><span>Low fraud probability</span><strong>{(demoResult.fraud_probability * 100).toFixed(1)}%</strong></li>}
-                  <li><span>Threshold used</span><strong>{demoResult.fraud_threshold ?? 'auto'}</strong></li>
-                  <li><span>Ensemble consensus</span><strong>{demoResult.prediction === 'fraudulent' ? 'Fraud' : 'Legitimate'}</strong></li>
-                </ul>
-                <p className="text-sm text-dim mt-1">
-                  The final decision is made by the meta-learner (logistic regression) which weights the three base models' probabilities.
-                </p>
-              </div>
-            )}
-          </div>
+      {/* ── FAQ ── */}
+      <section className="card mt-2">
+        <h2><Info size={20} /> Frequently Asked Questions</h2>
+        <div className="faq-list">
+          {faqs.map((faq, i) => (
+            <div key={i} className={`faq-item ${expandedFaq === i ? 'open' : ''}`}>
+              <button className="faq-question" onClick={() => toggleFaq(i)}>
+                <span>{faq.q}</span>
+                {expandedFaq === i ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              {expandedFaq === i && <p className="faq-answer">{faq.a}</p>}
+            </div>
+          ))}
         </div>
-      </div>
-
-      {/* 7. Model Performance Summary */}
-      <div className="card mt-1">
-        <h2><BarChart3 size={20} /> Ensemble Performance</h2>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th>Accuracy</th>
-                <th>Precision</th>
-                <th>Recall</th>
-                <th>F1</th>
-                <th>ROC-AUC</th>
-              </tr>
-            </thead>
-            <tbody>
-              {['random_forest', 'xgboost', 'neural_network', 'meta_learner'].map(name => {
-                const m = modelsInfo.meta_learner_info && name === 'meta_learner'
-                  ? modelsInfo.meta_learner_info.metrics
-                  : null
-                return m ? (
-                  <tr key={name}>
-                    <td>{name.replace(/_/g, ' ')}</td>
-                    <td>{m.accuracy.toFixed(4)}</td>
-                    <td>{m.precision.toFixed(4)}</td>
-                    <td>{m.recall.toFixed(4)}</td>
-                    <td><strong>{m.f1_score.toFixed(4)}</strong></td>
-                    <td>{m.roc_auc.toFixed(4)}</td>
-                  </tr>
-                ) : null
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      </section>
     </div>
   )
 }

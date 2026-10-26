@@ -21,7 +21,8 @@ build/
 *.log
 
 # Model binaries (large, regenerate via scripts/train_models.py)
-models/*.joblib
+# Commented out so Railway Docker build includes trained models at deploy time.
+# models/*.joblib
 
 # Datasets (large raw/expanded CSVs; processed/ is tracked)
 dataset/*.csv

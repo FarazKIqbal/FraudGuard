@@ -69,7 +69,7 @@ def create_app(config_name=None):
     limiter = Limiter(
         app=app,
         key_func=get_remote_address,
-        default_limits=["200 per day", "50 per hour"],
+        default_limits=[],
         storage_uri=os.environ.get("REDIS_URL")
     )
     # Strict limits on /api/predict (the hot path).

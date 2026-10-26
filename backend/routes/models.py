@@ -88,6 +88,9 @@ def model_metrics():
     df['model'] = df['model'].str.lower().str.replace(' ', '_', regex=False)
     df['model'] = df['model'].str.replace('(', '', regex=False).str.replace(')', '', regex=False)
     df['model'] = df['model'].map(model_mapping).fillna(df['model'])
+    # Keep one current evaluation per model so duplicate training runs do not
+    # render duplicate cards or overwrite the displayed result unpredictably.
+    df = df.drop_duplicates(subset=['model'], keep='last')
     records = df.to_dict(orient='records')
 
     return jsonify({'status': 'success', 'data': records})
