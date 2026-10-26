@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Build the React frontend for production.
-COPY frontend/package*.json ./frontend/
+COPY frontend/ ./frontend/
 WORKDIR /app/frontend
 RUN npm ci && npm run build
 WORKDIR /app
