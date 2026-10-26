@@ -23,9 +23,13 @@ COPY . .
 # Create the models directory and retrain a lighter Random Forest
 # so the committed binary never exceeds GitHub's 100 MB limit.
 RUN mkdir -p models dataset/processed && \
-    python -c "
-import pandas as pd, numpy as np, joblib, os
+    cat > /tmp/train_rf.py << 'EOF'
+import pandas as pd
+import numpy as np
+import joblib
+import os
 from sklearn.ensemble import RandomForestClassifier
+
 meta = joblib.load('models/feature_metadata.joblib')
 train = pd.read_csv('dataset/processed/train_data.csv')
 test = pd.read_csv('dataset/processed/test_data.csv')
@@ -35,7 +39,8 @@ m = RandomForestClassifier(n_estimators=100, max_depth=12, min_samples_split=10,
 m.fit(X, y)
 joblib.dump(m, 'models/random_forest_model.joblib')
 print('RF retrained, size:', round(os.path.getsize('models/random_forest_model.joblib')/1024/1024, 1), 'MB')
-"
+EOF
+    python /tmp/train_rf.py
 
 # Serve the built frontend via Flask static files.
 ENV FLASK_ENV=production
