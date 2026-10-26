@@ -4,23 +4,28 @@ WORKDIR /app
 
 # Install system dependencies (needed for some ML libraries).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ \
+    gcc g++ nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files first for layer caching.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Build the React frontend for production.
+COPY frontend/package*.json ./frontend/
+WORKDIR /app/frontend
+RUN npm ci && npm run build
+WORKDIR /app
+
 # Copy application code.
 COPY . .
 
-# Create the models directory.
-RUN mkdir -p models dataset/processed
-
-# Retrain a lighter Random Forest (<50 MB) so the repo stays under GitHub's 100 MB limit.
-RUN python -c " \
+# Create the models directory and retrain a lighter Random Forest
+# so the committed binary never exceeds GitHub's 100 MB limit.
+RUN mkdir -p models dataset/processed && \
+    python -c " \
 import pandas as pd, numpy as np, joblib, os; \
-os.makedirs('models', exist_ok=True); \
+from sklearn.ensemble import RandomForestClassifier; \
 meta = joblib.load('models/feature_metadata.joblib'); \
 train = pd.read_csv('dataset/processed/train_data.csv'); \
 test = pd.read_csv('dataset/processed/test_data.csv'); \
@@ -29,6 +34,9 @@ m = RandomForestClassifier(n_estimators=100, max_depth=12, min_samples_split=10,
 m.fit(X, y); joblib.dump(m, 'models/random_forest_model.joblib'); \
 print('RF retrained, size:', round(os.path.getsize('models/random_forest_model.joblib')/1024/1024, 1), 'MB') \
 "
+
+# Serve the built frontend via Flask static files.
+ENV FLASK_ENV=production
 
 # Port the app listens on.
 EXPOSE 5000

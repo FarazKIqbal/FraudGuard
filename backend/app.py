@@ -116,6 +116,16 @@ def create_app(config_name=None):
         })
 
     # ------------------------------------------------------------------
+    # Serve the React SPA for any non-API routes (catch-all).
+    # ------------------------------------------------------------------
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_react(path):
+        if path != "" and os.path.isfile(os.path.join(app.static_folder, path)):
+            return send_from_directory(app.static_folder, path)
+        return send_from_directory(app.static_folder, 'index.html')
+
+    # ------------------------------------------------------------------
     # Global error handlers
     # ------------------------------------------------------------------
     @app.errorhandler(400)
