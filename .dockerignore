@@ -27,6 +27,5 @@ Thumbs.db
 .ua/
 .claude/
 
-# Large datasets (processed/ is tracked)
-dataset/*.csv
+# Large raw datasets
 dataset/raw/

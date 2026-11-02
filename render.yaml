@@ -10,3 +10,11 @@ services:
     envVars:
       - key: FLASK_ENV
         value: production
+      - key: DEFAULT_MODEL
+        value: meta_learner
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: GUNICORN_THREADS
+        value: "2"
+      - key: GUNICORN_TIMEOUT
+        value: "120"

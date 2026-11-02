@@ -1,138 +1,135 @@
-# Deploying FraudGuard
+# Deploying FraudGuard with Vercel and Render
 
-FraudGuard is a two-part app: a Flask API (backend) and a React dashboard (frontend).
-Both are static enough to deploy on free tiers. This guide covers the recommended
-platforms, from easiest to most control.
+FraudGuard is deployed as two services:
 
----
+- **Vercel** hosts the React/Vite dashboard as a static site.
+- **Render** hosts the Flask API and trained model files in one Docker service.
 
-## Recommended platforms (all free tiers)
+This keeps the frontend on Vercel's CDN and leaves Render responsible only for
+the Python machine-learning API.
 
-| Platform | Best for | Free tier limits |
-|----------|----------|-----------------|
-| **Railway** | Easiest — one command, auto-deploys on push | 512 MB RAM, 5,000 build hours/month |
-| **Render** | Zero-config, free HTTPS, background workers | 512 MB RAM, 750 free hours/month |
-| **Fly.io** | Global edge deployment, closest to users | 256 MB shared VMs, ~$0-2/month |
+## 1. Prepare the repository
 
-Railway and Render are the simplest for this project. Fly.io is best if you want
-the API to run close to your ad-network partners.
+The model files under `models/` and the processed data used by analytics must
+be committed. The large random-forest artifact is intentionally regenerated
+from the tracked processed training data during the Docker build. Do not
+commit `.env`, credentials, `node_modules/`, or raw datasets.
 
----
+Test locally:
 
-## Option 1: Railway (recommended)
+```powershell
+# API (from the repository root)
+.\.venv\Scripts\python.exe run.py
 
-Railway detects the `Procfile` and deploys automatically.
-
-### Deploy the backend
-
-```bash
-# Install the Railway CLI
-npm i -g @railway/cli
-
-# Sign in and create a project
-railway login
-railway new
-
-# Deploy
-railway up
+# Frontend (in a second terminal)
+cd frontend
+npm ci
+npm run build
 ```
 
-Railway reads `Procfile` and runs `gunicorn wsgi:app`. Set these environment
-variables in the Railway dashboard:
+The local Vite proxy sends `/api` requests to `http://localhost:5000`. In
+production, the frontend uses the `VITE_API_URL` environment variable instead.
 
-- `FLASK_ENV=production`
-- `DEFAULT_MODEL=meta_learner`
+## 2. Deploy the API to Render
 
-### Deploy the frontend
+1. Push the repository to GitHub.
+2. In Render, choose **New > Blueprint** and select the repository.
+3. Render detects `render.yaml` and creates the `fraudguard` web service.
+4. Confirm the service is on the **Free** plan.
+5. After the first successful deploy, open the service's **Settings** and copy
+   its public URL, for example:
 
-Railway can also host the static frontend. Build it locally and deploy the `dist/`
-folder to [Netlify](https://netlify.com) (free tier, custom domain, global CDN):
-
-```bash
-cd frontend && npm run build
-# Drag dist/ into Netlify, or:
-netlify deploy --dir=dist --prod
-```
-
----
-
-## Option 2: Render
-
-Render is zero-config. Push your repo, connect it, and Render detects the
-`Dockerfile`.
-
-1. Go to [render.com](https://render.com) and sign up.
-2. Click "New Web Service" → connect your GitHub repo.
-3. Render builds the `Dockerfile` and deploys. It assigns a free HTTPS URL.
-4. Set environment variables in the Render dashboard:
-   - `FLASK_ENV=production`
-   - `DEFAULT_MODEL=meta_learner`
-
-For the frontend, use Render's **Static Site** service pointing at the
-`frontend/dist` directory after a build step.
-
----
-
-## Option 3: Fly.io (global edge)
-
-```bash
-# Install the Fly CLI
-curl -L https://fly.io/install.sh | sh
-fly launch
-```
-
-Fly.io asks a few questions and generates `fly.toml`. It deploys the
-`Dockerfile` to the nearest region. Free tier gives you 256 MB shared VMs.
-
----
-
-## Pre-deploy checklist
-
-Before deploying, make sure these are in order:
-
-1. **Train the models** (if not already done):
-   ```bash
-   python scripts/preprocess_data.py
-   python scripts/train_models.py
-   python scripts/train_metalearner.py
-   ```
-   The trained `.joblib` files in `models/` are needed at runtime.
-
-2. **Build the frontend**:
-   ```bash
-   cd frontend && npm run build
+   ```text
+   https://fraudguard.onrender.com
    ```
 
-3. **Set environment variables** on your platform:
-   - `FLASK_ENV=production` — disables debug mode
-   - `DEFAULT_MODEL=meta_learner` — default model for predictions
-   - `REDIS_URL` (optional) — enables distributed rate limiting
+6. Add this variable in Render's **Environment** section:
 
-4. **Verify the health endpoint** after deploy:
-   ```bash
-   curl https://your-app.railway.app/api/health
-   curl https://your-app.railway.app/api/health/ready
-   ```
+   | Variable | Value |
+   |---|---|
+   | `FRONTEND_ORIGIN` | the final Vercel URL, for example `https://fraudguard.vercel.app` |
 
-   `/api/health/ready` returns 200 only when all models are loaded.
+The other production variables are provided by `render.yaml`:
 
----
-
-## Architecture
-
-```
-┌─────────────────┐     ┌──────────────────┐
-│  React SPA      │────▶│  Flask + Gunicorn │
-│  (Netlify/      │     │  (Railway/       │
-│   Render/Fly)   │     │   Render/Fly)     │
-└─────────────────┘     └────────┬─────────┘
-                                │
-                        ┌───────┴───────┐
-                        │  models/*.joblib│
-                        │  dataset/       │
-                        └────────────────┘
+```text
+FLASK_ENV=production
+DEFAULT_MODEL=meta_learner
+WEB_CONCURRENCY=1
+GUNICORN_THREADS=2
+GUNICORN_TIMEOUT=120
 ```
 
-The frontend is a static site (no backend needed). The backend serves the API
-and reads model files from disk. Both can run on the same platform or be split
-across two.
+Verify the API:
+
+```powershell
+curl https://YOUR-RENDER-DOMAIN.onrender.com/api/health
+curl https://YOUR-RENDER-DOMAIN.onrender.com/api/health/ready
+```
+
+The readiness endpoint should report the loaded base models and meta-learner.
+
+### Free-plan considerations
+
+- The service can sleep after inactivity, so the first request may have a
+  noticeable cold start while the models load.
+- Keep `WEB_CONCURRENCY=1`; multiple workers would load another copy of the
+  scikit-learn/XGBoost models and can exceed the free instance's memory.
+- Two Gunicorn threads allow health checks and ordinary requests without
+  multiplying model processes.
+- The Docker build does not install Node.js or build the frontend.
+- `.dockerignore` excludes local environments, dependencies, and raw datasets.
+- Do not add Redis for this single free instance. The in-memory limiter avoids
+  the cost and maintenance of another service.
+
+## 3. Deploy the frontend to Vercel
+
+1. Import the same GitHub repository into Vercel.
+2. Set **Root Directory** to `frontend`.
+3. Use these build settings:
+
+   - Framework preset: **Vite**
+   - Install command: `npm ci`
+   - Build command: `npm run build`
+   - Output directory: `dist`
+
+4. Add this Vercel environment variable:
+
+   | Variable | Value |
+   |---|---|
+   | `VITE_API_URL` | `https://YOUR-RENDER-DOMAIN.onrender.com` |
+
+5. Redeploy Vercel.
+6. Copy the Vercel production URL into Render's `FRONTEND_ORIGIN` and
+   redeploy the Render service.
+
+`frontend/vercel.json` rewrites client-side routes such as `/predict` to
+`index.html`, so refreshing a dashboard page does not return a Vercel 404.
+
+## 4. Test the complete deployment
+
+Open the Vercel URL and test:
+
+1. Dashboard model loading
+2. A single prediction
+3. A batch prediction
+4. The Models and Analytics pages
+5. Refreshing a nested route such as `/predict`
+
+If the frontend reports a network error, check that `VITE_API_URL` contains the
+Render URL without a trailing slash and that `FRONTEND_ORIGIN` exactly matches
+the Vercel HTTPS origin.
+
+## Optional custom domains
+
+Add a custom domain to Vercel for the dashboard. If the domain changes, update
+Render's `FRONTEND_ORIGIN` to the exact HTTPS origin without a trailing slash.
+The Render domain can remain the API domain:
+
+```text
+https://fraudguard.onrender.com
+https://fraudguard.example.com
+```
+
+For repeatable deployments, GitHub-connected deployments are preferred because
+Render and Vercel rebuild automatically when changes are pushed to the
+selected production branch.

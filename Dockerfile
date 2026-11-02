@@ -2,34 +2,23 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies (needed for some ML libraries).
+# Install build tools needed by some ML wheels.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ nodejs npm \
+    gcc g++ \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files first for layer caching.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the RF retraining script into the image and run it so the committed
-# random_forest_model.joblib never exceeds GitHub's 100 MB limit.
-COPY scripts/train_rf.py /app/scripts/train_rf.py
-RUN python /app/scripts/train_rf.py
-
-# Build the React frontend for production.
-COPY frontend/ ./frontend/
-WORKDIR /app/frontend
-RUN npm ci && npm run build
-WORKDIR /app
-
-# Copy application code.
 COPY . .
 
-# Serve the built frontend via Flask static files.
+# The full RF artifact is too large for GitHub's file limit. Generate the
+# lightweight deployment version from the tracked processed training data.
+RUN python scripts/train_rf.py
+
 ENV FLASK_ENV=production
 
-# Port the app listens on.
-EXPOSE 5000
-
-# Run the Flask app via gunicorn in production.
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "--timeout", "60", "wsgi:app"]
+# Render provides PORT at runtime. One worker keeps the ML service within the
+# free plan memory limit; threads still allow health checks while a request runs.
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers ${WEB_CONCURRENCY:-1} --threads ${GUNICORN_THREADS:-2} --timeout ${GUNICORN_TIMEOUT:-120} wsgi:app"]
