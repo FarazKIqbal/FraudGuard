@@ -31,8 +31,18 @@ def create_app(config_name=None):
     app = Flask(__name__)
     app.config.from_object(config_by_name.get(config_name, config_by_name['default']))
 
-    # Allow the local Vite server and the deployed Vercel origin.
-    allowed_origins = os.environ.get('FRONTEND_ORIGIN', '*')
+    # Allow configured custom domains, local development, and Vercel preview
+    # deployments. FRONTEND_ORIGIN may contain comma-separated exact origins.
+    configured_origins = [
+        origin.strip()
+        for origin in os.environ.get('FRONTEND_ORIGIN', '').split(',')
+        if origin.strip()
+    ]
+    allowed_origins = configured_origins + [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        r'^https://[a-z0-9-]+\.vercel\.app$',
+    ]
     CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
 
     # ------------------------------------------------------------------
